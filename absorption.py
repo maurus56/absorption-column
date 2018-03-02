@@ -75,7 +75,7 @@ def plates(x_, y_, p_op):
     """
 
     def operation(x): return (
-        (((p_op[1][1] - p_op[1][0]) / (p_op[0][1] - p_op[0][0])) * x) + p_op[1][0])
+        (((p_op[1][1] - p_op[1][0]) / (p_op[0][1] - p_op[0][0])) * (x - p_op[0][0])) + p_op[1][0])
 
     def add_pto(ptol, pto):
         ptol[0].append(pto[0])
@@ -83,9 +83,9 @@ def plates(x_, y_, p_op):
 
     equilibrium = [np.asarray(x_), np.asarray(y_)]
     sample_size = len(x_)
-    x_max = equilibrium[0][-5]
+    x_max = p_op[0][1]
     ptos = [[], []]
-    ini_point = [0, operation(0)]
+    ini_point = [p_op[0][0], operation(p_op[0][0])]
     add_pto(ptos, ini_point)
 
     while ini_point[0] < x_max:
