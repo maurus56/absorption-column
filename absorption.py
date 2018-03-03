@@ -17,6 +17,7 @@ except ImportError as err:
     import pip
     from subprocess import call
     print (err)
+    call("pip install --upgrade matplotlib", shell=True)
     call("pip install --upgrade numpy", shell=True)
     print ("\nDone installing dependencies")
 ######################
