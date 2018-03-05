@@ -7,19 +7,22 @@ import os
 from configparser import ConfigParser
 import json
 path = os.path.dirname(os.path.realpath(__file__))
-print ("\n####Calculo de numero de platos en columna de absorcion####")
-print ("\nImporting Libraries..."),
+print("\n####Calculo de numero de platos en columna de absorcion####")
+print("\nImporting Libraries..."),
 try:
     import numpy as np
     import matplotlib.pyplot as plt
-    print ("Done")
+    print("Done")
 except ImportError as err:
     import pip
     from subprocess import call
-    print (err)
+    print(err)
     call("pip install --upgrade matplotlib", shell=True)
     call("pip install --upgrade numpy", shell=True)
-    print ("\nDone installing dependencies")
+    print("\nDone installing dependencies")
+    import numpy as np
+    import matplotlib.pyplot as plt
+    print("Done")
 ######################
 
 #/////////////////////////////////////////////#
@@ -134,20 +137,54 @@ def plot(p_op, x_, y_, ptos, a, b, n_plates):
     plt.legend(frameon=False, fontsize=10, numpoints=1, loc='upper left')
     plt.show()
 
+#/////////////////////////////////////////////#
+
+
+def get_from_file():
+    """Get variables from ini file
+    """
+
+    config = ConfigParser()
+    try:
+        config.read('%s/variables.txt' % path)
+
+    except (IOError, FileNotFoundError):
+ 
+        file_str = [
+            "# SOLO MODIFICAR LOS VALORES DENTRO DE LOS [] DONDE Y COMO SE INDICA", "",
+            "[equilibrio]", "",
+            "# Coordenadas X y Y, curva de equilibrio [x1, x2, x3 ... xn]",
+            "x: [0.0000562, 0.0001403, 0.00028, 0.000422, 0.000564, 0.000842, 0.001403, 0.001965, 0.00279, 0.0042, 0.00698, 0.01385, 0.0206, 0.0273]",
+            "y: [0.00065789, 0.00157895, 0.00421053, 0.00763158, 0.01118421, 0.01855263, 0.03421053, 0.05131579, 0.07763158, 0.12105263, 0.21184211, 0.44210526, 0.68026316, 0.91842105]", "",
+            "[operacion]", "",
+            "# Puntos esxtemos, curva de operacion [ [x1, x2], [y1, y2] ]",
+            "puntos: [[0, 0.00355], [0.02, 0.2]]"]
+        with open('%s/variables.txt' % path, "w") as f:
+            f.writelines(file_str)
+
+        config.read('%s/variables.txt' % path)
+
+    x_ = json.loads(config.get("equilibrio", "x"))
+    y_ = json.loads(config.get("equilibrio", "y"))
+    p_op = json.loads(config.get("operacion", "puntos"))
+
+    if not (len(x_) == len(y_)):
+        print("!!! X and Y don't have the same ammount of numbers inside !!!\n")
+        quit()
+
+    return x_, y_, p_op
 
 #/////////////////////////////////////////////#
+
+
 def main():
     """
     Main instance
     """
 
-    print ("\nLoading variables from file..."),
-    config = ConfigParser()
-    config.read('%s/variables.txt' % path)
-    x_ = json.loads(config.get("equilibrio", "x"))
-    y_ = json.loads(config.get("equilibrio", "y"))
-    p_op = json.loads(config.get("operacion", "puntos"))
-    print ("Done")
+    print("\nLoading variables from file..."),
+    x_, y_, p_op = get_from_file()
+    print("Done")
 
     ptos, n_plates, a, b = plates(x_, y_, p_op)
 
