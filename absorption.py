@@ -115,17 +115,17 @@ def plates(x_, y_, p_op):
 #/////////////////////////////////////////////#
 
 
-def plot(p_op, x_, y_, ptos, a, b, n_plates):
+def plot(p_op, x_, y_, ptos, a, b, n_plates, diagonal_, bol):
 
     # operation
     plt.plot(p_op[0], p_op[1],  color='blue', marker='o',
-             mec='none', ms=4, lw=1, label='Operacion')
+             mec='none', ms=4, lw=1.5, label='Operacion')
     # equilibrium
     plt.plot(x_, y_, color='orange', marker='o',
-             mec='none', ms=4, lw=1, label='Equilibrio')
+             mec='none', ms=4, lw=1.5, label='Equilibrio')
     # plates
     plt.plot(ptos[0], ptos[1], color='black', mec='none', ms=4,
-             lw=1, label='plates: {0:.3f}'.format(round(n_plates, 3)))
+             lw=1.5, label='plates: {0:.3f}'.format(round(n_plates, 3)))
     # a
     plt.plot(a[0], a[1], color='green', ls='--', lw=1)
     # b
@@ -133,6 +133,10 @@ def plot(p_op, x_, y_, ptos, a, b, n_plates):
     # extension
     plt.plot([a[0][0], b[0][0]], [a[1][1], b[1][1]],
              color='blue', marker='o', ms=4, ls='--', lw=1)
+    # diagonal
+    if bol == True:
+        plt.plot([p_op[0][0], diagonal_[0][0]], [p_op[1][0], diagonal_[1][0]], color='purple', ls='--', lw=1)
+        plt.plot([p_op[0][1], diagonal_[0][1]], [p_op[1][1], diagonal_[1][1]], color='purple', ls='--', lw=1)
 
     plt.legend(frameon=False, fontsize=10, numpoints=1, loc='upper left')
     plt.show()
@@ -147,9 +151,10 @@ def get_from_file():
     config = ConfigParser()
     try:
         config.read('%s/variables.txt' % path)
-        x_ = json.loads(config.get("equilibrio", "x"))
-        y_ = json.loads(config.get("equilibrio", "y"))
-        p_op = json.loads(config.get("operacion", "puntos"))
+        x_      = json.loads(config.get("equilibrio", "x"))
+        y_      = json.loads(config.get("equilibrio", "y"))
+        p_op    = json.loads(config.get("operacion", "puntos"))
+        M       = json.loads(config.get("diagonal", "M"))
 
     except:
         file_str ="""
@@ -163,41 +168,86 @@ y: [0.00065789, 0.00157895, 0.00421053, 0.00763158, 0.01118421, 0.01855263, 0.03
 
 [operacion]
 
-# Puntos extremos, curva de operacion [ [x1, x2], [y1, y2] ]
-puntos: [[0, 0.00355], [0.02, 0.2]]"""
+# Puntos esxtemos, curva de operacion [ [x1, x2], [y1, y2] ]
+puntos: [[0, 0.00355], [0.02, 0.2]]
+
+[diagonal]
+
+M: [na]"""
         with open('%s/variables.txt' % path, "w") as f:
             f.writelines(file_str)
 
         config.read('%s/variables.txt' % path)
-        x_ = json.loads(config.get("equilibrio", "x"))
-        y_ = json.loads(config.get("equilibrio", "y"))
-        p_op = json.loads(config.get("operacion", "puntos"))
+        x_      = json.loads(config.get("equilibrio", "x"))
+        y_      = json.loads(config.get("equilibrio", "y"))
+        p_op    = json.loads(config.get("operacion", "puntos"))
+        M       = json.loads(config.get("diagonal", "M"))
 
     if not (len(x_) == len(y_)):
         print("!!! X and Y don't have the same ammount of numbers inside !!!\n")
         quit()
 
-    return x_, y_, p_op
+    return x_, y_, p_op, M
 
 #/////////////////////////////////////////////#
+def diagonal(M, p_op, x_, y_):
+    """
 
+    """
+    def operation_1(x): return (
+        (M[0] * (x - p_op[0][0])) + p_op[1][0])
 
+    def operation_2(x): return (
+        (M[0] * (x - p_op[0][1])) + p_op[1][1])
+
+    def add_pto(ptol, pto):
+        ptol[0].append(pto[0])
+        ptol[1].append(pto[1])
+    
+    equilibrium = [np.asarray(x_), np.asarray(y_)]
+    ptos = [[], []]
+    op_1 = np.asarray([operation_1(i) for i in x_])
+    op_2 = np.asarray([operation_2(i) for i in x_])
+
+    x1, y1 = interpolated_intercept(
+            equilibrium[0], op_1, equilibrium[1])
+    ini_point = [x1.tolist()[0][0], y1.tolist()[0][0]]
+    add_pto(ptos, ini_point)
+
+    x1, y1 = interpolated_intercept(
+            equilibrium[0], op_2, equilibrium[1])
+    ini_point = [x1.tolist()[0][0], y1.tolist()[0][0]]
+    add_pto(ptos, ini_point)
+
+    return ptos
+    
+
+#/////////////////////////////////////////////#
 def main():
     """
     Main instance
     """
 
     print("\nLoading variables from file..."),
-    x_, y_, p_op = get_from_file()
+    x_, y_, p_op, M = get_from_file()
     print("Done")
 
     ptos, n_plates, a, b = plates(x_, y_, p_op)
 
+    if M:
+        diagonal_ = diagonal(M, p_op, x_, y_)
+        print ("\n\n=== Diagonales ===\nXi2: {0[0][1]}\tYi1:{0[1][1]}\nXi1: {0[0][0]}\tYi2:{0[1][0]}".format(diagonal_))
+        bol = True
+    
+    else:
+        bol = False
+        diagonal_ = []
+    
     while ptos[0][-1] < x_[-1] and ptos[0][-1] < x_[-2]:
         del x_[-1]
         del y_[-1]
 
-    plot(p_op, x_, y_, ptos, a, b, n_plates)
+    plot(p_op, x_, y_, ptos, a, b, n_plates, diagonal_, bol)
 
 
 ######################
