@@ -1,3 +1,4 @@
+
 # SOLO MODIFICAR LOS VALORES DENTRO DE LOS [] DONDE Y COMO SE INDICA
 
 [equilibrio]
@@ -8,5 +9,9 @@ y: [0.00065789, 0.00157895, 0.00421053, 0.00763158, 0.01118421, 0.01855263, 0.03
 
 [operacion]
 
-# Puntos extremos, curva de operacion [ [x1, x2], [y1, y2] ]
+# Puntos esxtemos, curva de operacion [ [x1, x2], [y1, y2] ]
 puntos: [[0, 0.00355], [0.02, 0.2]]
+
+[diagonal]
+
+M: [-1.7]
